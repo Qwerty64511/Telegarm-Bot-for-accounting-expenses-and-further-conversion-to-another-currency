@@ -5,7 +5,7 @@ import telebot
 import os
 from telebot import types
 
-token = os.environ('TELEGRAM_TOKEN')
+token = os.environ['TELEGRAM_TOKEN']
 
 bot = telebot.TeleBot(token)
 # объявляем словари
