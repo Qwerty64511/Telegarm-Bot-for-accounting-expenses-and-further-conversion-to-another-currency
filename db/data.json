@@ -1,0 +1,24 @@
+{
+  "states": {
+    "810391410": "idet konvertaciya",
+    "1053817718": "vvedeni dannie"
+  },
+  "main": {},
+  "vvedeni dannie": {},
+  "idet rasschet": {},
+  "vtoroe rasschitat": {},
+  "idet konvertaciya": {},
+  "idet administrirovanie": {},
+  "sym": {
+    "1": "800",
+    "810391410": 1000,
+    "1053817718": 1099
+  },
+  "konvertaciya": {
+    "0": "Рублях",
+    "1": "rub"
+  },
+  "Admins": {
+    "mainadmins": "810391410"
+  }
+}
