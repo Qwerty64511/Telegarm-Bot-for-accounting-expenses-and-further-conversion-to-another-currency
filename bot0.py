@@ -134,6 +134,7 @@ def main_handler(message):
 def adminpanel(message):
     user_id = str(message.from_user.id)
     admins = data["Admins"]["mainadmins"]
+    doadmenki = koeficienti[12]
     if user_id in admins:
         bot.send_message(user_id, 'Режим администрирования')
         if message.text.lower() == 'очистить бд':
@@ -145,11 +146,13 @@ def adminpanel(message):
             tekct = tekct0 + '  ' + tekct1
             bot.send_message(user_id, tekct)
         elif message.text.lower() == 'выход':
-            doadmenki = koeficienti[12]
             change_data('states', user_id, doadmenki)
             bot.send_message(user_id, 'Выход выполнен')
         else:
             bot.send_message(user_id, 'Команда не верна')
+    else:
+        change_data('states', user_id, doadmenki)
+
 
 
 def ochistka():
