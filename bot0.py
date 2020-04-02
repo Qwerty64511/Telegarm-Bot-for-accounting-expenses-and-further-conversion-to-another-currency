@@ -5,7 +5,8 @@ import telebot
 import os
 from telebot import types
 
-token = os.environ['TELEGRAM_TOKEN']
+token = os.environ('TELEGRAM_TOKEN')
+
 bot = telebot.TeleBot(token)
 # объявляем словари
 koeficienti = {}  # будем в основном использовать на этапе с конвертацией, для коэффициентов
@@ -77,8 +78,11 @@ def dispatcher(message):
     if str(data['states']) == '{}':
         change_data('states', user_id, MAIN_STATE)
         print('izmenilos')
-    if str(data['states'][user_id]) == '{}':
+    try:
+        str(data['states'][user_id]) == '{}'
+    except(KeyError):
         change_data('states', user_id, MAIN_STATE)
+        print(data['states'][user_id])
     state = data['states'][user_id]
     print('current state', user_id, state)
     # Обрабатываем состояния
@@ -119,7 +123,9 @@ def main_handler(message):
     elif message.text.lower() == 'админ панель':
         adminpanel(message)
         doadmenki = data['states'][user_id]
-        koeficienti[13] = doadmenki
+        print(doadmenki)
+        koeficienti[12] = doadmenki
+        print(koeficienti[12], 'koeff')
         change_data('states', user_id, ADMIN)
     else:
         bot.send_message(message.from_user.id, 'Я вас не понял')
@@ -129,16 +135,21 @@ def adminpanel(message):
     user_id = str(message.from_user.id)
     admins = data["Admins"]["mainadmins"]
     if user_id in admins:
-        bot.send_message(user_id, 'Вход выполнен')
+        bot.send_message(user_id, 'Режим администрирования')
         if message.text.lower() == 'очистить бд':
             bot.send_message(message.from_user.id, 'Идёт очистка базы данных')
             ochistka()
         elif message.text.lower() == 'вывод бд':
-            tekct = str(data['states']) + str(data['sym']) + str(data['konvertaciya']) + str(data['Admins'])
+            tekct0 = 'STATES:  ' + str(data['states']) + 'SYMMI:  ' + str(data['sym']) + 'Informaciya pro konvertaciyu'
+            tekct1 = str(data['konvertaciya'])
+            tekct = tekct0 + '  ' + tekct1
             bot.send_message(user_id, tekct)
-        elif message.text.lower() == 'выход из панели':
-            doadmenki = koeficienti[13]
+        elif message.text.lower() == 'выход':
+            doadmenki = koeficienti[12]
             change_data('states', user_id, doadmenki)
+            bot.send_message(user_id, 'Выход выполнен')
+        else:
+            bot.send_message(user_id, 'Команда не верна')
 
 
 def ochistka():
@@ -197,6 +208,11 @@ def Sym1(message):
         change_data('states', user_id, Vvedini)
 
 
+def oprvaliuti(call, valuta):
+    user_id = str(call.from_user.id)
+    konvertaciya[user_id + 'valiutatrat'] = valuta
+
+
 # обработчик клавиатуры
 @bot.callback_query_handler(func=lambda call: True)
 def valuta(call):
@@ -206,33 +222,34 @@ def valuta(call):
         # объявляем валюту
         if call.data == 'eunow':
             valiuta = 'Евро'
-            konvertaciya["0"] = valiuta
+            oprvaliuti(call, valiuta)
 
         if call.data == 'usnow':
             valiuta = 'Долларах'
-            konvertaciya["0"] = valiuta
+            oprvaliuti(call, valiuta)
         if call.data == 'rubnow':
             valiuta = 'Рублях'
-            konvertaciya["0"] = valiuta
+            oprvaliuti(call, valiuta)
         if call.data == 'cnynow':
             valiuta = 'Юанях'
-            konvertaciya["0"] = valiuta
+            oprvaliuti(call, valiuta)
         bot.send_message(call.message.chat.id, 'Я записал вашу валюту, узнать ваши траты и '
                                                'валюту трат вы можете по комманде "траты" '
                                                'Также вы можете конвертировать ваши траты в другую валюту написав '
                                                'комманду '
                                                '"конвертировать"')
         change_data('states', user_id, Vvedini)
-        valiutahandler()  # вызываем функцию обработки переменной now
+        valiutahandler(call)  # вызываем функцию обработки переменной now
 
     else:
-        valiutahandler()  # вызываем функцию обработки переменной now
+        valiutahandler(call)  # вызываем функцию обработки переменной now
         # вызываем другой скрипт обработчика
         perevod(call)
 
 
-def valiutahandler():
-    valiuta = konvertaciya["0"]
+def valiutahandler(call):
+    user_id = str(call.from_user.id)
+    valiuta = konvertaciya[user_id + 'valiutatrat']
     if 'Руб' in valiuta:
         now = 'rub'
         konvertaciya[1] = now
@@ -250,7 +267,7 @@ def valiutahandler():
 # обработчик при введённых тратах
 def Trati(message):
     user_id = str(message.from_user.id)
-    valiuta = konvertaciya["0"]
+    valiuta = konvertaciya[user_id + 'valiutatrat']
     if message.text.lower() == 'траты':
         symma = data['sym'][user_id]
         print(symma)
