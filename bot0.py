@@ -1,8 +1,9 @@
-import json
-import random
-import requests
-import telebot
+import redis
 import os
+import telebot
+import json
+import requests
+import random
 from telebot import types
 
 token = os.environ['TELEGRAM_TOKEN']
@@ -48,8 +49,46 @@ Symiruem = 'idet rasschet'
 SYM1 = 'vtoroe rasschitat'
 konvertiruem = 'idet konvertaciya'
 ADMIN = 'idet administrirovanie'
-
-data = json.load(open('db/data.json', 'r', encoding='utf-8'))  # выводим нашу базу данных
+redis_url = os.environ.get('REDIS_URL')
+dict_db = {}
+if redis_url is None:
+    try:
+        data = json.load(open('db/data.json', 'r', encoding='utf-8'))  # выводим нашу базу данных
+    except FileNotFoundError:
+        data = {
+            "states": {},
+            "main": {},
+            "vvedeni dannie": {},
+            "idet rasschet": {},
+            "vtoroe rasschitat": {},
+            "idet konvertaciya": {},
+            "idet administrirovanie": {},
+            "sym": {},
+            "konvertaciya": {},
+            "Admins": {
+                "mainadmins": "810391410"
+            }
+        }
+else:
+    redis_db = redis.from_url(redis_url)
+    raw_data = redis_db.get('data')
+    if raw_data is None:
+        data = {
+            "states": {},
+            "main": {},
+            "vvedeni dannie": {},
+            "idet rasschet": {},
+            "vtoroe rasschitat": {},
+            "idet konvertaciya": {},
+            "idet administrirovanie": {},
+            "sym": {},
+            "konvertaciya": {},
+            "Admins": {
+                "mainadmins": "810391410"
+            }
+        }
+    else:
+        data = json.loads(raw_data)  # выводим нашу базу данных
 
 konvertaciya = data['konvertaciya']  # будем использовать на этапе с конвертацией и выводом "квт", для других переменных
 sym = data['sym']  # объявляем словарь с суммой
@@ -58,11 +97,15 @@ sym = data['sym']  # объявляем словарь с суммой
 # функция изменения базы данных
 def change_data(key, user_id, value):
     data[key][user_id] = value
-    json.dump(data,
-              open('db/data.json', 'w', encoding='utf-8'),
-              indent=2,
-              ensure_ascii=False,
-              )
+    if redis_url is None:
+        json.dump(data,
+                  open('db/data.json', 'w', encoding='utf-8'),
+                  indent=2,
+                  ensure_ascii=False,
+                  )
+    else:
+        redis_db = redis.from_url(redis_url)
+        redis_db.set('data', json.dumps(data))
 
 
 # диспетчер состояний
@@ -75,7 +118,7 @@ def dispatcher(message):
         change_data('states', user_id, MAIN_STATE)
     try:
         print(data['states'][user_id])  # Проверяем наличие пользователя в БД, если его нет в БД, то добавляем его в БД
-    except(KeyError):
+    except KeyError:
         change_data('states', user_id, MAIN_STATE)
     state = data['states'][user_id]
     print('current state', user_id, state)
