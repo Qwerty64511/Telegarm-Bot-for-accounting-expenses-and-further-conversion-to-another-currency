@@ -8,24 +8,18 @@ from telebot import types
 token = os.environ['TELEGRAM_TOKEN']
 
 bot = telebot.TeleBot(token)
-# объявляем словари
+
 koeficienti = {}  # будем в основном использовать на этапе с конвертацией, для коэффициентов
-# записываем в переменную url API центрабанка
-url = 'https://www.cbr-xml-daily.ru/daily_json.js'
+
+url = 'https://www.cbr-xml-daily.ru/daily_json.js'  # записываем в переменную url API центрабанка
 response = requests.get(url).json()
-U = response['Valute']
-US = U['USD']
-USD = US['Value']  # Из api центрабанка достали стоимость доллара в рублях
+USD = response['Valute']['USD']['Value']  # Из api центрабанка достали стоимость доллара в рублях
+print(USD)
 koeficienti[USD] = USD
 koeficienti[11] = USD
-E = response['Valute']
-EU = E['EUR']
-EUR = EU['Value']  # Из api центрабанка достали стоимость евро в рублях
-koeficienti[EUR] = EUR
+EUR = response['Valute']['EUR']['Value']  # Из api центрабанка достали стоимость евро в рублях
 koeficienti[0] = EUR
-C = response['Valute']
-CN = C['CNY']
-CNY = CN['Value']
+CNY = response['Valute']['CNY']['Value']  # Из api центрабанка достали стоимость юаней в рублях
 koeficienti[1] = CNY
 # Задаём коэффициенты перевода из одной валюты в другую
 izEURvUSD = int(EUR) / int(USD)
@@ -55,12 +49,13 @@ SYM1 = 'vtoroe rasschitat'
 konvertiruem = 'idet konvertaciya'
 ADMIN = 'idet administrirovanie'
 
-data = json.load(open('db/data.json', 'r', encoding='utf-8'))
+data = json.load(open('db/data.json', 'r', encoding='utf-8'))  # выводим нашу базу данных
 
 konvertaciya = data['konvertaciya']  # будем использовать на этапе с конвертацией и выводом "квт", для других переменных
-sym = data['sym']
+sym = data['sym']  # объявляем словарь с суммой
 
 
+# функция изменения базы данных
 def change_data(key, user_id, value):
     data[key][user_id] = value
     json.dump(data,
@@ -73,16 +68,15 @@ def change_data(key, user_id, value):
 # диспетчер состояний
 @bot.message_handler(content_types=['text'])
 def dispatcher(message):
-    print(data['states'], 'nach')
     user_id = str(message.from_user.id)
     if str(data['states']) == '{}':
+        # проверяем наличие пользователей, если их нет,
+        # то вызываем функцию добавления пользователя
         change_data('states', user_id, MAIN_STATE)
-        print('izmenilos')
     try:
-        str(data['states'][user_id]) == '{}'
+        print(data['states'][user_id])  # Проверяем наличие пользователя в БД, если его нет в БД, то добавляем его в БД
     except(KeyError):
         change_data('states', user_id, MAIN_STATE)
-        print(data['states'][user_id])
     state = data['states'][user_id]
     print('current state', user_id, state)
     # Обрабатываем состояния
@@ -117,15 +111,13 @@ def main_handler(message):
     elif message.text.lower() == 'рассчитать':
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, Symiruem)
-        print(str(data['states'][user_id]), 'biba')
+        print(str(data['states'][user_id]))
     elif message.text.lower() == 'траты' or message.text.lower() == 'квт' or message.text.lower() == 'конвертировать':
         bot.send_message(message.from_user.id, 'Вы ещё не ввели трату. Напишите "рассчитать" чтобы ввести трату')
     elif message.text.lower() == 'админ панель':
         adminpanel(message)
         doadmenki = data['states'][user_id]
-        print(doadmenki)
         koeficienti[12] = doadmenki
-        print(koeficienti[12], 'koeff')
         change_data('states', user_id, ADMIN)
     else:
         bot.send_message(message.from_user.id, 'Я вас не понял')
@@ -134,7 +126,6 @@ def main_handler(message):
 def adminpanel(message):
     user_id = str(message.from_user.id)
     admins = data["Admins"]["mainadmins"]
-    doadmenki = koeficienti[12]
     if user_id in admins:
         bot.send_message(user_id, 'Режим администрирования')
         if message.text.lower() == 'очистить бд':
@@ -146,13 +137,11 @@ def adminpanel(message):
             tekct = tekct0 + '  ' + tekct1
             bot.send_message(user_id, tekct)
         elif message.text.lower() == 'выход':
+            doadmenki = koeficienti[12]
             change_data('states', user_id, doadmenki)
             bot.send_message(user_id, 'Выход выполнен')
         else:
             bot.send_message(user_id, 'Команда не верна')
-    else:
-        change_data('states', user_id, doadmenki)
-
 
 
 def ochistka():
@@ -211,6 +200,7 @@ def Sym1(message):
         change_data('states', user_id, Vvedini)
 
 
+#  функция присваивания валюты
 def oprvaliuti(call, valuta):
     user_id = str(call.from_user.id)
     konvertaciya[user_id + 'valiutatrat'] = valuta
@@ -246,8 +236,7 @@ def valuta(call):
 
     else:
         valiutahandler(call)  # вызываем функцию обработки переменной now
-        # вызываем другой скрипт обработчика
-        perevod(call)
+        perevod(call)  # вызываем другой скрипт обработчика
 
 
 def valiutahandler(call):
@@ -273,7 +262,6 @@ def Trati(message):
     valiuta = konvertaciya[user_id + 'valiutatrat']
     if message.text.lower() == 'траты':
         symma = data['sym'][user_id]
-        print(symma)
         vivod = 'Ваши траты составили: ' + str(symma) + '  ' + 'Вы тратили деньги в ' + valiuta
         bot.send_message(message.from_user.id, vivod)
     elif message.text.lower() == 'рассчитать':
@@ -298,6 +286,7 @@ def Trati2(message):
         Trati(message)
 
 
+#  Клавиатура выбора валюты в которую конвертировать
 def konvert(message):
     # создаём клавиатуру, для определения, в какую валюту переводить
     keyboard = types.InlineKeyboardMarkup()
