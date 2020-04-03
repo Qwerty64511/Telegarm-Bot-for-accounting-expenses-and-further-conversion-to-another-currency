@@ -72,7 +72,7 @@ if redis_url is None:
 else:
     redis_db = redis.from_url(redis_url)
     raw_data = redis_db.get('data')
-    print('Viveodim 111')
+    print('Viveodim')
     if raw_data is None:
         data = {
             "states": {},
@@ -90,7 +90,7 @@ else:
         }
     else:
         data = json.loads(raw_data)  # выводим нашу базу данных
-        print('Viveli 111')
+        print('Viveli')
 
 konvertaciya = data['konvertaciya']  # будем использовать на этапе с конвертацией и выводом "квт", для других переменных
 sym = data['sym']  # объявляем словарь с суммой
