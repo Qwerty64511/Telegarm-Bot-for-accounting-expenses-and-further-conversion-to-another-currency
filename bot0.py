@@ -127,7 +127,6 @@ def adminpanel(message):
     user_id = str(message.from_user.id)
     admins = data["Admins"]["mainadmins"]
     if user_id in admins:
-        bot.send_message(user_id, 'Режим администрирования')
         if message.text.lower() == 'очистить бд':
             bot.send_message(message.from_user.id, 'Идёт очистка базы данных')
             ochistka()
@@ -140,6 +139,10 @@ def adminpanel(message):
             doadmenki = koeficienti[12]
             change_data('states', user_id, doadmenki)
             bot.send_message(user_id, 'Выход выполнен')
+        elif message.text.lower() == 'админ панель':
+            bot.send_message(user_id, 'Режим администрирования')
+        else:
+            bot.send_message(user_id, 'Команда не верна')
 
 
 def ochistka():
