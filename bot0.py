@@ -140,8 +140,6 @@ def adminpanel(message):
             doadmenki = koeficienti[12]
             change_data('states', user_id, doadmenki)
             bot.send_message(user_id, 'Выход выполнен')
-        else:
-            bot.send_message(user_id, 'Команда не верна')
 
 
 def ochistka():
