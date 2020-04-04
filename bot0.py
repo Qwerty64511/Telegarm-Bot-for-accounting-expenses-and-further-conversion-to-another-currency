@@ -1,10 +1,16 @@
-import redis
-import os
-import telebot
 import json
-import requests
+import os
 import random
+
+import black
+import isort
+import redis
+import requests
+import telebot
+from isort import SortImports
 from telebot import types
+
+SortImports("bot0.py")
 
 token = os.environ['TELEGRAM_TOKEN']
 
@@ -13,15 +19,18 @@ bot = telebot.TeleBot(token)
 koeficienti = {}  # будем в основном использовать на этапе с конвертацией, для коэффициентов
 
 url = 'https://www.cbr-xml-daily.ru/daily_json.js'  # записываем в переменную url API центрабанка
-response = requests.get(url).json()
+
+response = requests.get(url).json()  # преобразуем полученные из ссылки данные в словарь
+
 USD = response['Valute']['USD']['Value']  # Из api центрабанка достали стоимость доллара в рублях
-print(USD)
-koeficienti[USD] = USD
 koeficienti[11] = USD
+
 EUR = response['Valute']['EUR']['Value']  # Из api центрабанка достали стоимость евро в рублях
 koeficienti[0] = EUR
+
 CNY = response['Valute']['CNY']['Value']  # Из api центрабанка достали стоимость юаней в рублях
 koeficienti[1] = CNY
+
 # Задаём коэффициенты перевода из одной валюты в другую
 izEURvUSD = int(EUR) / int(USD)
 koeficienti[2] = izEURvUSD
@@ -69,10 +78,13 @@ if redis_url is None:
                 "mainadmins": "810391410"
             }
         }
+
+
 else:
     redis_db = redis.from_url(redis_url)
     raw_data = redis_db.get('data')
     print('Viveodim')
+
     if raw_data is None:
         data = {
             "states": {},
@@ -88,6 +100,7 @@ else:
                 "mainadmins": "810391410"
             }
         }
+
     else:
         data = json.loads(raw_data)  # выводим нашу базу данных
         print('Viveli')
@@ -114,27 +127,36 @@ def change_data(key, user_id, value):
 @bot.message_handler(content_types=['text'])
 def dispatcher(message):
     user_id = str(message.from_user.id)
+
     if str(data['states']) == '{}':
         # проверяем наличие пользователей, если их нет,
         # то вызываем функцию добавления пользователя
         change_data('states', user_id, MAIN_STATE)
+
     try:
         print(data['states'][user_id])  # Проверяем наличие пользователя в БД, если его нет в БД, то добавляем его в БД
     except KeyError:
         change_data('states', user_id, MAIN_STATE)
+
     state = data['states'][user_id]
     print('current state', user_id, state)
+
     # Обрабатываем состояния
     if state == MAIN_STATE:
         main_handler(message)
+
     elif state == Vvedini:
         Trati(message)
+
     elif state == Symiruem:
         Sym(message)
+
     elif state == SYM1:
         Sym1(message)
+
     elif state == konvertiruem:
         Trati2(message)
+
     elif state == ADMIN:
         adminpanel(message)
 
@@ -153,8 +175,10 @@ def main_handler(message):
                                                'вы узнаете возможности бота.   '
                                                'Напишите комманду /test для более понятного объяснения работы бота. '
                                                'Напишите "Рассчитать" чтобы добавить трату', reply_markup=markup)
+
     elif message.text == '/test':
         test(message)
+
     elif message.text == '/help':
         markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn2 = types.KeyboardButton('/test')
@@ -162,17 +186,21 @@ def main_handler(message):
         markup.row(btn2, btn3)
         tekct = 'По команде "рассчитать" вы вводите трату, по комманде /test вам будет представлен пример работы бота'
         bot.send_message(message.from_user.id, tekct, reply_markup=markup)
+
     elif message.text.lower() == 'рассчитать':
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, Symiruem)
         print(str(data['states'][user_id]))
+
     elif message.text.lower() == 'траты' or message.text.lower() == 'квт' or message.text.lower() == 'конвертировать':
         bot.send_message(message.from_user.id, 'Вы ещё не ввели трату. Напишите "рассчитать" чтобы ввести трату')
+
     elif message.text.lower() == 'админ панель':
         adminpanel(message)
         doadmenki = data['states'][user_id]
         koeficienti[12] = doadmenki
         change_data('states', user_id, ADMIN)
+
     else:
         bot.send_message(message.from_user.id, 'Я вас не понял')
 
@@ -180,21 +208,26 @@ def main_handler(message):
 def adminpanel(message):
     user_id = str(message.from_user.id)
     admins = data["Admins"]["mainadmins"]
+
     if user_id in admins:
         if message.text.lower() == 'очистить бд':
             bot.send_message(message.from_user.id, 'Идёт очистка базы данных')
             ochistka(message)
+
         elif message.text.lower() == 'вывод бд':
             tekct0 = 'STATES:  ' + str(data['states']) + 'SYMMI:  ' + str(data['sym']) + 'Informaciya pro konvertaciyu'
             tekct1 = str(data['konvertaciya'])
             tekct = tekct0 + '  ' + tekct1
             bot.send_message(user_id, tekct)
+
         elif message.text.lower() == 'выход':
             doadmenki = koeficienti[12]
             change_data('states', user_id, doadmenki)
             bot.send_message(user_id, 'Выход выполнен')
+
         elif message.text.lower() == 'админ панель':
             bot.send_message(user_id, 'Режим администрирования')
+
         else:
             bot.send_message(user_id, 'Команда не верна')
 
@@ -215,9 +248,11 @@ def test(message):
     btn2 = types.KeyboardButton('/help')
     btn3 = types.KeyboardButton('Рассчитать')
     markup.row(btn2, btn3)
+
     tekct = ' Вы: Пишите комманду "рассчитать",\nЗатем пишите цифрами сколько вы потратили,\nПосле выбираете валюту,\n'
     tekct1 = 'Потом вы можете Получить ваши траты написав комманду "Траты"\nвам выведится значение в виде:'
     bot.send_message(message.from_user.id, tekct + tekct1)
+
     primersymmi = random.randrange(1000, 30000)
     primervaluti = random.choice(['Долларов', 'Рублей', 'Евро', 'Юаней'])
     soobchenie = 'Ваши траты составили: ' + str(primersymmi) + ' ' + str(primervaluti)
@@ -229,14 +264,17 @@ def Sym(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
     aftercikl = Vvedini
+
     if state == Symiruem:
         symma = 0
         cifra = message.text
+
         try:
             symma += int(str(cifra))
         except:
             bot.send_message(user_id, 'Введите только цифры')
             aftercikl = Symiruem
+
         if aftercikl == Vvedini:
             sym[user_id] = symma
             sym["1"] = cifra
@@ -251,38 +289,48 @@ def Sym(message):
             keyboard2.add(key_cny)
             question2 = 'В какой валюте вы тратили деньги?'
             bot.send_message(message.from_user.id, text=question2, reply_markup=keyboard2)
+
         else:
             change_data('states', user_id, aftercikl)
+
 
 # записывальщик трат, когда уже была введена трата
 def Sym1(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
+
     try:
         dosymmi = koeficienti[12]
     except:
         dosymmi = Vvedini
     aftercikl = Vvedini
+
     if state == SYM1:
         symma = int(sym[user_id])
         cifra = message.text
+
         try:
             symma += int(str(cifra))
         except:
             bot.send_message(user_id, 'Введите только цифры')
             aftercikl = SYM1
+
         if aftercikl == Vvedini:
             sym[user_id] = symma
             sym["1"] = cifra
+
             markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
             btn1 = types.KeyboardButton('Траты')
             btn2 = types.KeyboardButton('конвертировать')
             btn3 = types.KeyboardButton('Рассчитать')
             markup1.row(btn1, btn2, btn3)
+
             bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
                                                    '"траты"', reply_markup=markup1)
+
             if dosymmi == konvertiruem and aftercikl == Vvedini:
                 change_data('states', user_id, dosymmi)
+
             else:
                 change_data('states', user_id, aftercikl)
 
@@ -296,10 +344,13 @@ def oprvaliuti(call, valuta):
 # обработчик клавиатуры
 @bot.callback_query_handler(func=lambda call: True)
 def valuta(call):
+
     user_id = str(call.from_user.id)
     state = data['states'][user_id]
+
     if state == Symiruem:
         # объявляем валюту
+
         if call.data == 'eunow':
             valiuta = 'Евро'
             oprvaliuti(call, valiuta)
@@ -307,22 +358,27 @@ def valuta(call):
         if call.data == 'usnow':
             valiuta = 'Долларах'
             oprvaliuti(call, valiuta)
+
         if call.data == 'rubnow':
             valiuta = 'Рублях'
             oprvaliuti(call, valiuta)
+
         if call.data == 'cnynow':
             valiuta = 'Юанях'
             oprvaliuti(call, valiuta)
+
         markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Траты')
         btn2 = types.KeyboardButton('конвертировать')
         btn3 = types.KeyboardButton('Рассчитать')
         markup1.row(btn1, btn2, btn3)
+
         bot.send_message(call.message.chat.id, 'Я записал вашу валюту, узнать ваши траты и '
                                                'валюту трат вы можете по комманде "траты" '
                                                'Также вы можете конвертировать ваши траты в другую валюту написав '
                                                'комманду '
                                                '"конвертировать"', reply_markup=markup1)
+
         change_data('states', user_id, Vvedini)
         valiutahandler(call)  # вызываем функцию обработки переменной now
 
@@ -334,15 +390,19 @@ def valuta(call):
 def valiutahandler(call):
     user_id = str(call.from_user.id)
     valiuta = konvertaciya[user_id + 'valiutatrat']
+
     if 'Руб' in valiuta:
         now = 'rub'
         konvertaciya[1] = now
+
     if 'Дол' in valiuta:
         now = 'us'
         konvertaciya[1] = now
+
     if 'Евр' in valiuta:
         now = 'eu'
         konvertaciya[1] = now
+
     if 'Юан' in valiuta:
         now = 'cny'
         konvertaciya[1] = now
@@ -352,27 +412,34 @@ def valiutahandler(call):
 def Trati(message):
     user_id = str(message.from_user.id)
     valiuta = konvertaciya[user_id + 'valiutatrat']
+
     if message.text.lower() == 'траты':
         markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Рассчитать')
         btn2 = types.KeyboardButton('конвертировать')
+
         if str(data['states'][user_id]) == konvertiruem:
             btn3 = types.KeyboardButton('квт')
             markup.row(btn1, btn2, btn3)
         else:
             markup.row(btn1, btn2)
+
         symma = data['sym'][user_id]
         vivod = 'Ваши траты составили: ' + str(symma) + '  ' + 'Вы тратили деньги в ' + valiuta
         bot.send_message(message.from_user.id, vivod, reply_markup=markup)
+
     elif message.text.lower() == 'рассчитать':
         dosymmi = data['states'][user_id]
         koeficienti[12] = dosymmi
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, SYM1)
+
     elif message.text.lower() == 'конвертировать':
         konvert(message)
+
     elif message.text.lower() == 'квт':
         bot.send_message(message.from_user.id, 'Вы ещё не сконвертировали траты')
+
     else:
         main_handler(message)
 
@@ -380,16 +447,20 @@ def Trati(message):
 #  обработчик при введённых данных и проделанной конвертации
 def Trati2(message):
     user_id = str(message.from_user.id)
+
     if message.text.lower() == 'квт':
         konvertirovano = konvertaciya[user_id + 'symma']
         vochtoperevesti = konvertaciya[user_id]
+
         markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Рассчитать')
         btn2 = types.KeyboardButton('конвертировать')
         btn3 = types.KeyboardButton('Траты')
         markup.row(btn1, btn2, btn3)
+
         tekct = 'Ваши траты: ' + str(konvertirovano) + ' ' + str(vochtoperevesti)
         bot.send_message(message.from_user.id, tekct, reply_markup=markup)
+
     else:
         Trati(message)
 
@@ -406,6 +477,7 @@ def konvert(message):
     keyboard.add(key_rub)
     key_cny = types.InlineKeyboardButton(text='Перевести в Юани', callback_data='cny')
     keyboard.add(key_cny)
+
     question = 'В какую валюту вы хотите конвертировать?'
     bot.send_message(message.from_user.id, text=question, reply_markup=keyboard)
 
@@ -416,6 +488,7 @@ def perevod(call):
     user_id = str(call.from_user.id)
     change_data('states', user_id, konvertiruem)
     now = konvertaciya[1]
+
     # обработчик клавиатуры в которой задаётся, переменная в которую мы переводим
     symma = sym[user_id]
     CNY = koeficienti[1]
@@ -431,87 +504,104 @@ def perevod(call):
     izCNYvUSD = koeficienti[9]
     izCNYvEUR = koeficienti[10]
     vochtoperevesti = call.data
+
     # всё ниже это конвертаторы из одной валюты в другую. Всё точно работает:)
     if vochtoperevesti == "eu" and now == 'eu':
         bot.send_message(call.message.chat.id, 'Ваша валюта уже евро')
+
     if vochtoperevesti == "rub" and now == 'rub':
         bot.send_message(call.message.chat.id, 'Ваша валюта уже рубли')
+
     if vochtoperevesti == "us" and now == 'us':
         bot.send_message(call.message.chat.id, 'Ваша валюта уже доллары')
+
     if vochtoperevesti == 'cny' and now == 'cny':
         bot.send_message(call.message.chat.id, 'Ваша валюта уже юани')
+
     if vochtoperevesti == 'rub' and now == 'cny':
         konvertirovano = int(symma) * CNY
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_RUB(call)
         messkonvert(call)
+
     if vochtoperevesti == 'cny' and now == 'rub':
         konvertirovano = int(symma) * izRUBvCNY
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_CNY(call)
         messkonvert(call)
+
     if vochtoperevesti == 'us' and now == 'cny':
         konvertirovano = int(symma) * izCNYvUSD
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_USD(call)
         messkonvert(call)
+
     if vochtoperevesti == 'cny' and now == 'eu':
         konvertirovano = int(symma) * izEURvCNY
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_CNY(call)
         messkonvert(call)
+
     if vochtoperevesti == 'cny' and now == 'us':
         konvertirovano = int(symma) * izUSDvCNY
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_CNY(call)
         messkonvert(call)
+
     if vochtoperevesti == 'eu' and now == 'cny':
         konvertirovano = int(symma) * izCNYvEUR
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_EUR(call)
         messkonvert(call)
+
     if vochtoperevesti == 'us' and now == 'rub':
         konvertirovano = int(symma) * izRUBvUSD
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_USD(call)
         messkonvert(call)
+
     if vochtoperevesti == 'rub' and now == 'us':
         konvertirovano = int(symma) * USD
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_RUB(call)
         messkonvert(call)
+
     if vochtoperevesti == 'eu' and now == 'rub':
         konvertirovano = int(symma) * izRUBvEUR
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_EUR(call)
         messkonvert(call)
+
     if vochtoperevesti == 'rub' and now == 'eu':
         konvertirovano = int(symma) * EUR
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_RUB(call)
         messkonvert(call)
+
     if vochtoperevesti == 'eu' and now == 'us':
         konvertirovano = int(symma) * izUSDvEUR
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_EUR(call)
         messkonvert(call)
+
     if vochtoperevesti == 'us' and now == 'eu':
         konvertirovano = int(symma) * izEURvUSD
         konvertaciya[user_id + 'symma'] = konvertirovano
         okryglenie(call)
         KonvertV_USD(call)
         messkonvert(call)
+
     json.dump(data,
               open('db/data.json', 'w', encoding='utf-8'),
               indent=2,
@@ -556,16 +646,17 @@ def okryglenie(call):  # Функция округления
 
 def messkonvert(call):  # функция отправки сообщения, о возможности узнать конвертированную трату :)
     user_id = call.message.chat.id
+
     markup1 = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     btn1 = types.KeyboardButton('Траты')
     btn2 = types.KeyboardButton('квт')
     btn3 = types.KeyboardButton('Рассчитать')
     btn4 = types.KeyboardButton('конвертировать')
     markup1.row(btn1, btn2, btn3, btn4)
+
     bot.send_message(user_id, 'В любой момент вы можете узнать конвертированную трату написав комманду'
                               '"квт"', reply_markup=markup1)
 
 
 if __name__ == '__main__':
     bot.polling()
-    print('Бот остановился! Самое время для загрузки данных')
