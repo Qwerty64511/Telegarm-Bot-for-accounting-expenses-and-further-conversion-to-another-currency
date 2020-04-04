@@ -251,6 +251,7 @@ def Sym(message):
 def Sym1(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
+    dosymmi = konvertaciya[13]
     if state == SYM1:
         symma = int(sym[user_id])
         cifra = message.text
@@ -264,7 +265,10 @@ def Sym1(message):
         markup1.row(btn1, btn2, btn3)
         bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
                                                '"траты"', reply_markup=markup1)
-        change_data('states', user_id, Vvedini)
+        if dosymmi == konvertiruem:
+            change_data('states', user_id, dosymmi)
+        else:
+            change_data('states', user_id, Vvedini)
 
 
 #  функция присваивания валюты
@@ -337,6 +341,8 @@ def Trati(message):
         btn1 = types.KeyboardButton('Рассчитать')
         btn2 = types.KeyboardButton('конвертировать')
         if str(data['states'][user_id]) == konvertiruem:
+            dosymmi = data['states'][user_id]
+            koeficienti[13] = dosymmi
             btn3 = types.KeyboardButton('квт')
             markup.row(btn1, btn2, btn3)
         else:
