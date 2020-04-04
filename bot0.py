@@ -143,16 +143,25 @@ def dispatcher(message):
 def main_handler(message):
     user_id = str(message.from_user.id)
     if message.text == '/start':
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+        btn1 = types.KeyboardButton('/test')
+        btn2 = types.KeyboardButton('/help')
+        btn3 = types.KeyboardButton('Рассчитать')
+        markup.row(btn1, btn2, btn3)
         bot.send_message(message.from_user.id, 'Привет, я могу помочь тебе рассчитать дневные затраты, по команде '
                                                '/help '
                                                'вы узнаете возможности бота.   '
                                                'Напишите комманду /test для более понятного объяснения работы бота. '
-                                               'Напишите "Рассчитать" чтобы добавить трату')
+                                               'Напишите "Рассчитать" чтобы добавить трату', reply_markup=markup)
     elif message.text == '/test':
         test(message)
     elif message.text == '/help':
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+        btn2 = types.KeyboardButton('/test')
+        btn3 = types.KeyboardButton('Рассчитать')
+        markup.row(btn2, btn3)
         tekct = 'По команде "рассчитать" вы вводите трату, по комманде /test вам будет представлен пример работы бота'
-        bot.send_message(message.from_user.id, tekct)
+        bot.send_message(message.from_user.id, tekct, reply_markup=markup)
     elif message.text.lower() == 'рассчитать':
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, Symiruem)
@@ -174,7 +183,7 @@ def adminpanel(message):
     if user_id in admins:
         if message.text.lower() == 'очистить бд':
             bot.send_message(message.from_user.id, 'Идёт очистка базы данных')
-            ochistka()
+            ochistka(message)
         elif message.text.lower() == 'вывод бд':
             tekct0 = 'STATES:  ' + str(data['states']) + 'SYMMI:  ' + str(data['sym']) + 'Informaciya pro konvertaciyu'
             tekct1 = str(data['konvertaciya'])
@@ -190,11 +199,13 @@ def adminpanel(message):
             bot.send_message(user_id, 'Команда не верна')
 
 
-def ochistka():
+def ochistka(message):
+    user_id = str(message.from_user.id)
     data['states'] = {}
     data['sym'] = {}
     data['konvertaciya'] = {}
     print(data)
+    change_data('states', user_id, ADMIN)
 
 
 # Пример работы бота
@@ -244,6 +255,11 @@ def Sym1(message):
         bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
                                                '"траты"')
         change_data('states', user_id, Vvedini)
+        markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+        btn1 = types.KeyboardButton('Траты')
+        btn2 = types.KeyboardButton('конвертировать')
+        btn3 = types.KeyboardButton('Рассчитать')
+        markup1.row(btn1, btn2, btn3)
 
 
 #  функция присваивания валюты
@@ -272,11 +288,16 @@ def valuta(call):
         if call.data == 'cnynow':
             valiuta = 'Юанях'
             oprvaliuti(call, valiuta)
+        markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+        btn1 = types.KeyboardButton('Траты')
+        btn2 = types.KeyboardButton('конвертировать')
+        btn3 = types.KeyboardButton('Рассчитать')
+        markup1.row(btn1, btn2, btn3)
         bot.send_message(call.message.chat.id, 'Я записал вашу валюту, узнать ваши траты и '
                                                'валюту трат вы можете по комманде "траты" '
                                                'Также вы можете конвертировать ваши траты в другую валюту написав '
                                                'комманду '
-                                               '"конвертировать"')
+                                               '"конвертировать"', reply_markup=markup1)
         change_data('states', user_id, Vvedini)
         valiutahandler(call)  # вызываем функцию обработки переменной now
 
@@ -307,9 +328,13 @@ def Trati(message):
     user_id = str(message.from_user.id)
     valiuta = konvertaciya[user_id + 'valiutatrat']
     if message.text.lower() == 'траты':
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+        btn1 = types.KeyboardButton('Рассчитать')
+        btn2 = types.KeyboardButton('конвертировать')
+        markup.row(btn1, btn2)
         symma = data['sym'][user_id]
         vivod = 'Ваши траты составили: ' + str(symma) + '  ' + 'Вы тратили деньги в ' + valiuta
-        bot.send_message(message.from_user.id, vivod)
+        bot.send_message(message.from_user.id, vivod, reply_markup=markup)
     elif message.text.lower() == 'рассчитать':
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, SYM1)
@@ -494,8 +519,14 @@ def okryglenie(call):  # Функция округления
 
 def messkonvert(call):  # функция отправки сообщения, о возможности узнать конвертированную трату :)
     user_id = call.message.chat.id
+    markup1 = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+    btn1 = types.KeyboardButton('Траты')
+    btn2 = types.KeyboardButton('квт')
+    btn3 = types.KeyboardButton('Рассчитать')
+    btn4 = types.KeyboardButton('конвертировать')
+    markup1.row(btn1, btn2, btn3, btn4)
     bot.send_message(user_id, 'В любой момент вы можете узнать конвертированную трату написав комманду'
-                              '"квт"')
+                              '"квт"', reply_markup=markup1)
 
 
 if __name__ == '__main__':
