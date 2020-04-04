@@ -251,7 +251,7 @@ def Sym(message):
 def Sym1(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
-    dosymmi = konvertaciya[13]
+    dosymmi = konvertaciya[12]
     if state == SYM1:
         symma = int(sym[user_id])
         cifra = message.text
@@ -342,7 +342,7 @@ def Trati(message):
         btn2 = types.KeyboardButton('конвертировать')
         if str(data['states'][user_id]) == konvertiruem:
             dosymmi = data['states'][user_id]
-            koeficienti[13] = dosymmi
+            koeficienti[12] = dosymmi
             btn3 = types.KeyboardButton('квт')
             markup.row(btn1, btn2, btn3)
         else:
