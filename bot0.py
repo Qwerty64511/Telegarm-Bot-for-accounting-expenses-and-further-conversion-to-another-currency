@@ -257,14 +257,14 @@ def Sym1(message):
         symma += int(str(cifra))
         sym[user_id] = symma
         sym["1"] = cifra
-        bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
-                                               '"траты"')
-        change_data('states', user_id, Vvedini)
         markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Траты')
         btn2 = types.KeyboardButton('конвертировать')
         btn3 = types.KeyboardButton('Рассчитать')
         markup1.row(btn1, btn2, btn3)
+        bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
+                                               '"траты"', reply_markup=markup1)
+        change_data('states', user_id, Vvedini)
 
 
 #  функция присваивания валюты
