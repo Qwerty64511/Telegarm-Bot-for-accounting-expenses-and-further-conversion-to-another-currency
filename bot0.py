@@ -361,7 +361,13 @@ def Trati2(message):
     if message.text.lower() == 'квт':
         konvertirovano = konvertaciya[user_id + 'symma']
         vochtoperevesti = konvertaciya[user_id]
-        bot.send_message(message.from_user.id, 'Ваши траты: ' + str(konvertirovano) + ' ' + str(vochtoperevesti))
+        markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+        btn1 = types.KeyboardButton('Рассчитать')
+        btn2 = types.KeyboardButton('конвертировать')
+        btn3 = types.KeyboardButton('Траты')
+        markup.row(btn1, btn2, btn3)
+        tekct = 'Ваши траты: ' + str(konvertirovano) + ' ' + str(vochtoperevesti)
+        bot.send_message(message.from_user.id, tekct, reply_markup=markup)
     else:
         Trati(message)
 
