@@ -228,24 +228,31 @@ def test(message):
 def Sym(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
+    aftercikl = Vvedini
     if state == Symiruem:
         symma = 0
         cifra = message.text
-        symma += int(str(cifra))
-        sym[user_id] = symma
-        sym["1"] = cifra
-        keyboard2 = types.InlineKeyboardMarkup()
-        key_eur = types.InlineKeyboardButton(text='в евро', callback_data='eunow')
-        keyboard2.add(key_eur)  # добавляем кнопку в клавиатуру
-        key_usd = types.InlineKeyboardButton(text='В долларах', callback_data='usnow')
-        keyboard2.add(key_usd)
-        key_rub = types.InlineKeyboardButton(text='В рублях', callback_data='rubnow')
-        keyboard2.add(key_rub)
-        key_cny = types.InlineKeyboardButton(text='В юанях', callback_data='cnynow')
-        keyboard2.add(key_cny)
-        question2 = 'В какой валюте вы тратили деньги?'
-        bot.send_message(message.from_user.id, text=question2, reply_markup=keyboard2)
-
+        try:
+            symma += int(str(cifra))
+        except:
+            bot.send_message(user_id, 'Введите только цифры')
+            aftercikl = Symiruem
+        if aftercikl == Vvedini:
+            sym[user_id] = symma
+            sym["1"] = cifra
+            keyboard2 = types.InlineKeyboardMarkup()
+            key_eur = types.InlineKeyboardButton(text='в евро', callback_data='eunow')
+            keyboard2.add(key_eur)  # добавляем кнопку в клавиатуру
+            key_usd = types.InlineKeyboardButton(text='В долларах', callback_data='usnow')
+            keyboard2.add(key_usd)
+            key_rub = types.InlineKeyboardButton(text='В рублях', callback_data='rubnow')
+            keyboard2.add(key_rub)
+            key_cny = types.InlineKeyboardButton(text='В юанях', callback_data='cnynow')
+            keyboard2.add(key_cny)
+            question2 = 'В какой валюте вы тратили деньги?'
+            bot.send_message(message.from_user.id, text=question2, reply_markup=keyboard2)
+        else:
+            change_data('states', user_id, aftercikl)
 
 # записывальщик трат, когда уже была введена трата
 def Sym1(message):
@@ -255,23 +262,29 @@ def Sym1(message):
         dosymmi = koeficienti[12]
     except:
         dosymmi = Vvedini
+    aftercikl = Vvedini
     if state == SYM1:
         symma = int(sym[user_id])
         cifra = message.text
-        symma += int(str(cifra))
-        sym[user_id] = symma
-        sym["1"] = cifra
-        markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
-        btn1 = types.KeyboardButton('Траты')
-        btn2 = types.KeyboardButton('конвертировать')
-        btn3 = types.KeyboardButton('Рассчитать')
-        markup1.row(btn1, btn2, btn3)
-        bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
-                                               '"траты"', reply_markup=markup1)
-        if dosymmi == konvertiruem:
-            change_data('states', user_id, dosymmi)
-        else:
-            change_data('states', user_id, Vvedini)
+        try:
+            symma += int(str(cifra))
+        except:
+            bot.send_message(user_id, 'Введите только цифры')
+            aftercikl = SYM1
+        if aftercikl == Vvedini:
+            sym[user_id] = symma
+            sym["1"] = cifra
+            markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+            btn1 = types.KeyboardButton('Траты')
+            btn2 = types.KeyboardButton('конвертировать')
+            btn3 = types.KeyboardButton('Рассчитать')
+            markup1.row(btn1, btn2, btn3)
+            bot.send_message(message.from_user.id, 'Хорошо, я записал вашу трату, узнать её вы можете написав команду '
+                                                   '"траты"', reply_markup=markup1)
+            if dosymmi == konvertiruem and aftercikl == Vvedini:
+                change_data('states', user_id, dosymmi)
+            else:
+                change_data('states', user_id, aftercikl)
 
 
 #  функция присваивания валюты
