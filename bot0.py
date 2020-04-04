@@ -211,13 +211,17 @@ def ochistka(message):
 
 # Пример работы бота
 def test(message):
+    markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+    btn2 = types.KeyboardButton('/help')
+    btn3 = types.KeyboardButton('Рассчитать')
+    markup.row(btn2, btn3)
     tekct = ' Вы: Пишите комманду "рассчитать",\nЗатем пишите цифрами сколько вы потратили,\nПосле выбираете валюту,\n'
     tekct1 = 'Потом вы можете Получить ваши траты написав комманду "Траты"\nвам выведится значение в виде:'
     bot.send_message(message.from_user.id, tekct + tekct1)
     primersymmi = random.randrange(1000, 30000)
     primervaluti = random.choice(['Долларов', 'Рублей', 'Евро', 'Юаней'])
     soobchenie = 'Ваши траты составили: ' + str(primersymmi) + ' ' + str(primervaluti)
-    bot.send_message(message.from_user.id, soobchenie)
+    bot.send_message(message.from_user.id, soobchenie, reply_markup=markup)
 
 
 # записывальщик трат
