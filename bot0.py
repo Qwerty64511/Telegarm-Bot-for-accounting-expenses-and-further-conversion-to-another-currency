@@ -251,7 +251,7 @@ def Sym(message):
 def Sym1(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
-    dosymmi = koeficienti[12]
+    dosymmi = konvertiruem
     if state == SYM1:
         symma = int(sym[user_id])
         cifra = message.text
@@ -341,11 +341,6 @@ def Trati(message):
         btn1 = types.KeyboardButton('Рассчитать')
         btn2 = types.KeyboardButton('конвертировать')
         if str(data['states'][user_id]) == konvertiruem:
-            dosymmi = data['states'][user_id]
-            koeficienti[12] = dosymmi
-            print(koeficienti[12])
-            dosymmi = koeficienti[12]
-            print(dosymmi)
             btn3 = types.KeyboardButton('квт')
             markup.row(btn1, btn2, btn3)
         else:
@@ -354,6 +349,8 @@ def Trati(message):
         vivod = 'Ваши траты составили: ' + str(symma) + '  ' + 'Вы тратили деньги в ' + valiuta
         bot.send_message(message.from_user.id, vivod, reply_markup=markup)
     elif message.text.lower() == 'рассчитать':
+        dosymmi = data['states'][user_id]
+        koeficienti[12] = dosymmi
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, SYM1)
     elif message.text.lower() == 'конвертировать':
