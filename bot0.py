@@ -206,6 +206,7 @@ def ochistka(message):
     data['konvertaciya'] = {}
     print(data)
     change_data('states', user_id, ADMIN)
+    print(data['states'])
 
 
 # Пример работы бота
