@@ -251,7 +251,7 @@ def Sym(message):
 def Sym1(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
-    dosymmi = konvertiruem
+    dosymmi = koeficienti[12]
     if state == SYM1:
         symma = int(sym[user_id])
         cifra = message.text
