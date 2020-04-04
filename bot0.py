@@ -343,6 +343,9 @@ def Trati(message):
         if str(data['states'][user_id]) == konvertiruem:
             dosymmi = data['states'][user_id]
             koeficienti[12] = dosymmi
+            print(koeficienti[12])
+            dosymmi = koeficienti[12]
+            print(dosymmi)
             btn3 = types.KeyboardButton('квт')
             markup.row(btn1, btn2, btn3)
         else:
