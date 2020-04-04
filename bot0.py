@@ -336,7 +336,11 @@ def Trati(message):
         markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Рассчитать')
         btn2 = types.KeyboardButton('конвертировать')
-        markup.row(btn1, btn2)
+        if str(data['states'][user_id]) == konvertaciya:
+            btn3 = types.KeyboardButton('квт')
+            markup.row(btn1, btn2, btn3)
+        else:
+            markup.row(btn1, btn2)
         symma = data['sym'][user_id]
         vivod = 'Ваши траты составили: ' + str(symma) + '  ' + 'Вы тратили деньги в ' + valiuta
         bot.send_message(message.from_user.id, vivod, reply_markup=markup)
