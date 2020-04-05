@@ -60,6 +60,8 @@ konvertiruem = 'idet konvertaciya'
 ADMIN = 'idet administrirovanie'
 redis_url = os.environ.get('REDIS_URL')
 dict_db = {}
+
+#  Создаём базу данных либо загружаем готовую
 if redis_url is None:
     try:
         data = json.load(open('db/data.json', 'r', encoding='utf-8'))  # выводим нашу базу данных
@@ -112,12 +114,14 @@ sym = data['sym']  # объявляем словарь с суммой
 # функция изменения базы данных
 def change_data(key, user_id, value):
     data[key][user_id] = value
-    if redis_url is None:
+    # проверяем наличие базы данных на редис
+    if redis_url is None:  # Обработка базы данных, если нет подключения к редис
         json.dump(data,
                   open('db/data.json', 'w', encoding='utf-8'),
                   indent=2,
                   ensure_ascii=False,
                   )
+    # Загружаем базу данных из редис
     else:
         redis_db = redis.from_url(redis_url)
         redis_db.set('data', json.dumps(data))
@@ -125,12 +129,11 @@ def change_data(key, user_id, value):
 
 # диспетчер состояний
 @bot.message_handler(content_types=['text'])
+# Обработчик всех состояний
 def dispatcher(message):
     user_id = str(message.from_user.id)
-
+    # Если словарь с состояниями пустой, то добавляем туда пользователя и присваиваем ему состояние MAIN_STATE
     if str(data['states']) == '{}':
-        # проверяем наличие пользователей, если их нет,
-        # то вызываем функцию добавления пользователя
         change_data('states', user_id, MAIN_STATE)
 
     try:
@@ -138,8 +141,8 @@ def dispatcher(message):
     except KeyError:
         change_data('states', user_id, MAIN_STATE)
 
-    state = data['states'][user_id]
-    print('current state', user_id, state)
+    state = data['states'][user_id]  # Достаём состояния
+    print('current state', user_id, state)  # Печатаем текущее состояние в логи
 
     # Обрабатываем состояния
     if state == MAIN_STATE:
@@ -163,7 +166,8 @@ def dispatcher(message):
 
 # основной обработчик
 def main_handler(message):
-    user_id = str(message.from_user.id)
+    user_id = str(message.from_user.id)  # Объявляем переменную user id
+    #  Обрабатываем команды
     if message.text == '/start':
         markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('/test')
@@ -186,7 +190,7 @@ def main_handler(message):
         markup.row(btn2, btn3)
         tekct = 'По команде "рассчитать" вы вводите трату, по комманде /test вам будет представлен пример работы бота'
         bot.send_message(message.from_user.id, tekct, reply_markup=markup)
-
+    #  Обрабатываем кнопки
     elif message.text.lower() == 'рассчитать':
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, Symiruem)
@@ -200,11 +204,12 @@ def main_handler(message):
         doadmenki = data['states'][user_id]
         koeficienti[12] = doadmenki
         change_data('states', user_id, ADMIN)
-
+    #  Обрабатывем всё остальное
     else:
         bot.send_message(message.from_user.id, 'Я вас не понял')
 
 
+#  Панель администратора
 def adminpanel(message):
     user_id = str(message.from_user.id)
     admins = data["Admins"]["mainadmins"]
@@ -232,6 +237,7 @@ def adminpanel(message):
             bot.send_message(user_id, 'Команда не верна')
 
 
+#  Функция очистки базы данных
 def ochistka(message):
     user_id = str(message.from_user.id)
     data['states'] = {}
@@ -263,19 +269,19 @@ def test(message):
 def Sym(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
-    aftercikl = Vvedini
+    aftercikl = Vvedini  # Переменная, которая позволяет в случае ошибки перезапустить цикл, стандарт: она равна Vvedini
 
-    if state == Symiruem:
+    if state == Symiruem:  # Проверка, что мы правельно попали в функцию
         symma = 0
         cifra = message.text
 
-        try:
+        try:  # Если всё введено правельно, то прибавляем введёное число к сумме
             symma += int(str(cifra))
-        except:
+        except:  # Если введено что-то помимо числа, то отправляем сообщение о неправельных данных
             bot.send_message(user_id, 'Введите только цифры')
             aftercikl = Symiruem
 
-        if aftercikl == Vvedini:
+        if aftercikl == Vvedini:  # Проверка, что не допущены ошибки
             sym[user_id] = symma
             sym["1"] = cifra
             keyboard2 = types.InlineKeyboardMarkup()
@@ -290,7 +296,7 @@ def Sym(message):
             question2 = 'В какой валюте вы тратили деньги?'
             bot.send_message(message.from_user.id, text=question2, reply_markup=keyboard2)
 
-        else:
+        else:  # Если ошибки допущены, перезапускаем цикл
             change_data('states', user_id, aftercikl)
 
 
@@ -299,9 +305,10 @@ def Sym1(message):
     user_id = str(message.from_user.id)
     state = data['states'][user_id]
 
-    try:
-        dosymmi = koeficienti[12]
+    try:  # Проверяем, что у нас имеется состояние, которое было до начала выполнения функции
+        dosymmi = data['dosymmi']
     except:
+        # Если состояние исчезло(к примеру ошибка сервера или утрата БД), то считаем состояние за Vvedini
         dosymmi = Vvedini
     aftercikl = Vvedini
 
@@ -310,12 +317,13 @@ def Sym1(message):
         cifra = message.text
 
         try:
-            symma += int(str(cifra))
+            symma += int(str(cifra))  # Если всё верно, то сумируем
         except:
-            bot.send_message(user_id, 'Введите только цифры')
+            bot.send_message(user_id, 'Введите только цифры')  # Если допущена какая-либо ошибка, то перезапускаем
             aftercikl = SYM1
 
-        if aftercikl == Vvedini:
+        if aftercikl == Vvedini:  # Если всё введено нормально, то продолжаем
+
             sym[user_id] = symma
             sym["1"] = cifra
 
@@ -331,8 +339,8 @@ def Sym1(message):
             if dosymmi == konvertiruem and aftercikl == Vvedini:
                 change_data('states', user_id, dosymmi)
 
-            else:
-                change_data('states', user_id, aftercikl)
+        else:  # Если допущена ошибка при вводе суммы, то перезапускаем цикл
+            change_data('states', user_id, aftercikl)
 
 
 #  функция присваивания валюты
@@ -345,12 +353,12 @@ def oprvaliuti(call, valuta):
 @bot.callback_query_handler(func=lambda call: True)
 def valuta(call):
 
-    user_id = str(call.from_user.id)
+    user_id = str(call.from_user.id)  # Задаём user_id и state
     state = data['states'][user_id]
 
-    if state == Symiruem:
-        # объявляем валюту
+    if state == Symiruem:  # Проверка, верно ли состояние
 
+        # объявляем валюту
         if call.data == 'eunow':
             valiuta = 'Евро'
             oprvaliuti(call, valiuta)
@@ -367,6 +375,7 @@ def valuta(call):
             valiuta = 'Юанях'
             oprvaliuti(call, valiuta)
 
+        # Настраиваем клавиатуру
         markup1 = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Траты')
         btn2 = types.KeyboardButton('конвертировать')
@@ -380,17 +389,21 @@ def valuta(call):
                                                '"конвертировать"', reply_markup=markup1)
 
         change_data('states', user_id, Vvedini)
+
         valiutahandler(call)  # вызываем функцию обработки переменной now
 
     else:
         valiutahandler(call)  # вызываем функцию обработки переменной now
+
         perevod(call)  # вызываем другой скрипт обработчика
 
 
 def valiutahandler(call):
-    user_id = str(call.from_user.id)
+
+    user_id = str(call.from_user.id)  # Объявляем переменные user_id и valiuta
     valiuta = konvertaciya[user_id + 'valiutatrat']
 
+    # Объявляем переменную now
     if 'Руб' in valiuta:
         now = 'rub'
         konvertaciya[1] = now
@@ -410,27 +423,40 @@ def valiutahandler(call):
 
 # обработчик при введённых тратах
 def Trati(message):
-    user_id = str(message.from_user.id)
+
+    user_id = str(message.from_user.id)  # Объявляем переменные user_id и valiuta
     valiuta = konvertaciya[user_id + 'valiutatrat']
 
     if message.text.lower() == 'траты':
+        # Вводим стандартные кнопки и стандартную клавиатуру
         markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
         btn1 = types.KeyboardButton('Рассчитать')
         btn2 = types.KeyboardButton('конвертировать')
 
+        # Если состояние 'konvertiruem', то добавляем дополнительную кнопку с текстом 'квт'
         if str(data['states'][user_id]) == konvertiruem:
             btn3 = types.KeyboardButton('квт')
             markup.row(btn1, btn2, btn3)
+        # Если другое состояние, то добавляем кнопки к клавиатуре
         else:
             markup.row(btn1, btn2)
 
+        # Объявляем переменную symma и объявляем переменную vivod
         symma = data['sym'][user_id]
         vivod = 'Ваши траты составили: ' + str(symma) + '  ' + 'Вы тратили деньги в ' + valiuta
         bot.send_message(message.from_user.id, vivod, reply_markup=markup)
 
     elif message.text.lower() == 'рассчитать':
+
+        # Делаем все манипуляции, для возврата к тому же состоянию
         dosymmi = data['states'][user_id]
-        koeficienti[12] = dosymmi
+        data['dosymmi'] = dosymmi
+        json.dump(data,
+                  open('db/data.json', 'w', encoding='utf-8'),
+                  indent=2,
+                  ensure_ascii=False,
+                  )
+
         bot.send_message(message.from_user.id, 'напиши сколько ты потратил(только цифрами)')
         change_data('states', user_id, SYM1)
 
@@ -467,6 +493,7 @@ def Trati2(message):
 
 #  Клавиатура выбора валюты в которую конвертировать
 def konvert(message):
+
     # создаём клавиатуру, для определения, в какую валюту переводить
     keyboard = types.InlineKeyboardMarkup()
     key_euro = types.InlineKeyboardButton(text=' перевести в Евро', callback_data='eu')
